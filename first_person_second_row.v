@@ -9,6 +9,8 @@
 
 `timescale 1 ns / 100 ps
 
+// TODO: **Add comments for all the games to make everything more clear**
+
 module first_person_second_row (
     input Clk,
     input Reset,
@@ -69,6 +71,7 @@ localparam
  GAME3_S3  = 18'b100000000000000000;  // 2^17 = 131072
 
 
+// TODO: Maybe make minutes an input and use this code in the top file
 // min_max is used to keep track of how many minutes we are at. So, in the Quiz state, you only have 3 minutes to answer a question
 localparam MAX_TIME = 120;
 reg [7:0] I_prev, min_max;
