@@ -18,21 +18,20 @@ module first_person_second_row (
     input Ack,
     input Sw0, Sw1, Sw2, Sw3,
     input BtnC, BtnL, BtnR, BtnU, BtnD,
-	input [3:0] I, // This is used as a time. If I == 1, then 5 real seconds passed
-	output q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN;
-	output q_GAME1, q_GAME2, q_GAME3;
-	output q_GAME1_S1, q_GAME1_S2, q_GAME1_S3;
-	output q_GAME2_S1, q_GAME2_S2, q_GAME2_S3;
-	output q_GAME3_S1, q_GAME3_S2, q_GAME3_S3;
+	input [7:0] minutes,
+	output q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN,
+	output q_GAME1, q_GAME2, q_GAME3,
+	output q_GAME1_S1, q_GAME1_S2, q_GAME1_S3,
+	output q_GAME2_S1, q_GAME2_S2, q_GAME2_S3,
+	output q_GAME3_S1, q_GAME3_S2, q_GAME3_S3,
 
 	// TODO: Figure out functionality for these.
 	// TODO: For example, SSDs can display how many lives we have, game_cnt, etc.
-	output screen;
-	output reg professor;
-	output reg [1:0] game_cnt;
-	output reg [2:0] lives;
-	output reg [3:0] quiz_cnt;
-	output reg [7:0] minutes;
+	output screen,
+	output reg professor,
+	output reg [1:0] game_cnt,
+	output reg [2:0] lives,
+	output reg [3:0] quiz_cnt,
 
 );
 
@@ -74,31 +73,7 @@ localparam
 // TODO: Maybe make minutes an input and use this code in the top file
 // min_max is used to keep track of how many minutes we are at. So, in the Quiz state, you only have 3 minutes to answer a question
 localparam MAX_TIME = 120;
-reg [7:0] I_prev, min_max;
-
-always @(posedge Clk or posedge Reset) begin
-    if (Reset) begin
-        minutes <= 0;
-        I_prev <= 0;
-		min_max <= 0;
-    end else begin
-        if (I != I_prev) 
-		begin
-            I_prev <= I;
-            minutes <= minutes + 1;
-
-			// Professor becomes active every 15 minutes (quarter hour), unless we are currently being quizzed
-			// TODO: we can make this more frequent if needed
-			if (minutes[3:0] == 4'b1110 && minutes != 0 && state != QUIZ)
-			begin
-				professor <= 1;
-				min_max <= minutes + 3;
-				quiz_cnt <= quiz_cnt + 1;
-			end
-        end
-    end
-end
-
+reg [7:0] min_max, min_prev;
 
 //start of state machine
 always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
@@ -118,7 +93,6 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
                  INI:
 					begin
 						professor <= 1'b0;
-						minutes <= 7'b0000000;
 						game_cnt <= 2'b00;
 						lives <= 3'b000;
 						quiz_cnt <= 4'b0000;
@@ -128,17 +102,14 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				IDLE:
 					begin
 						if (BtnC & !professor) state <= GAME;
-						else if (professor) 
-						begin
-							state <= QUIZ;
-						end
+						else if (professor) begin state <= QUIZ; min_max <= minutes + 3; end 
 
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME:
 					begin
 						if (BtnC & !professor) state <= IDLE;
-						else if (professor) state <= QUIZ;
+						else if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						
 
 						// Go to Games
@@ -208,7 +179,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 						//    Flip the first switch to continue
 						// """
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S1:
@@ -216,7 +187,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw0 & Sw1 & !Sw2) state <= GAME1_S2;
 						else if (!Sw0 | Sw2) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S2:
@@ -224,7 +195,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw0 & Sw1 & Sw2) state <= GAME1_S3;
 						else if (!Sw0 | !Sw1) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S3:
@@ -254,7 +225,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 						//    Press the first Btn to continue
 						// """
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S1:
@@ -262,7 +233,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (!BtnL & BtnR & !BtnD) state <= GAME2_S2;
 						else if (BtnL | BtnD) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S2:
@@ -270,7 +241,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (!BtnL & !BtnR & BtnD) state <= GAME2_S3;
 						else if (BtnL | BtnD) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S3:
@@ -296,7 +267,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						// The sequence is Sw3, BtnU, BtnD
 						// (we can make it longer if needed)
 						// Press Sw3 to continue
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 
@@ -305,7 +276,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw3 & BtnR & !BtnD) state <= GAME3_S2;
 						else if (!Sw3 | BtnD) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME3_S2:
@@ -313,7 +284,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw3 & !BtnR & BtnD) state <= GAME3_S3;
 						else if (!Sw3 | BtnR) state <= IDLE;
 
-						if (professor) state <= QUIZ;
+						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME3_S3:
