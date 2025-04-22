@@ -7,13 +7,11 @@
 //  Description: Top file where we instantiate the "fpsr" game
 // ---------------------------------------------------------------------------------
 
-// TODO: Add button debouncing (probably using SCEN) <- read up on different button enables
-
 module first_person_second_row_top (
 		//MemOE, MemWR, RamCS, 
 		QuadSpiFlashCS, // Disable the three memory chips
 
-        // Reset will be controlled by Sw15
+        // Reset will be controlled by Sw15 (done in XDC file)
         ClkPort, Reset, Ack                 // the 100 MHz incoming clock signal 
 		
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
@@ -72,6 +70,51 @@ module first_person_second_row_top (
         else if (timer) I <= I + 1;
     end
 
+
+    /* Buttons & Switches! */
+
+    // Declare wire signals for each SCEN output
+    wire BtnR_Pulse, BtnL_Pulse, BtnU_Pulse, BtnD_Pulse, BtnC_Pulse;
+    wire Sw0_Pulse, Sw1_Pulse, Sw2_Pulse, Sw3_Pulse;
+
+    // Instantiate the debouncers and connect them to the wire signals
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
+            (.CLK(sys_clk), .RESET(Reset), .PB(BtnR), .DPB( ), 
+            .SCEN(BtnR_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_2 
+            (.CLK(sys_clk), .RESET(Reset), .PB(BtnL), .DPB( ), 
+            .SCEN(BtnL_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_3 
+            (.CLK(sys_clk), .RESET(Reset), .PB(BtnU), .DPB( ), 
+            .SCEN(BtnU_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_4 
+            (.CLK(sys_clk), .RESET(Reset), .PB(BtnD), .DPB( ), 
+            .SCEN(BtnD_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_5 
+            (.CLK(sys_clk), .RESET(Reset), .PB(BtnC), .DPB( ), 
+            .SCEN(BtnC_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_6 
+            (.CLK(sys_clk), .RESET(Reset), .PB(Sw0), .DPB( ), 
+            .SCEN(Sw0_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_7 
+            (.CLK(sys_clk), .RESET(Reset), .PB(Sw1), .DPB( ), 
+            .SCEN(Sw1_Pulse), .MCEN( ), .CCEN( ));
+
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_8 
+            (.CLK(sys_clk), .RESET(Reset), .PB(Sw2), .DPB( ), 
+            .SCEN(Sw2_Pulse), .MCEN( ), .CCEN( ));
+        
+    ee354_debouncer #(.N_dc(28)) ee354_debouncer_9 
+            (.CLK(sys_clk), .RESET(Reset), .PB(Sw3), .DPB( ), 
+            .SCEN(Sw3_Pulse), .MCEN( ), .CCEN( ));
+
+
     /* From fpsr module */
     wire q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN;
     wire q_GAME1, q_GAME2, q_GAME3;
@@ -86,15 +129,15 @@ module first_person_second_row_top (
 
     first_person_second_row fpsr (
         /* Inputs (to fpsr) */
-        .Clk(sys_clk), .Reset(Reset), .Start(BtnC), .Ack(BtnC),
-        .Sw0(Sw0), .Sw1(Sw1), .Sw2(Sw2), .Sw3(Sw3),
-        .BtnC(BtnC), .BtnL(BtnL), .BtnR(BtnR), .BtnU(BtnU), .BtnD(BtnD),
+        .Clk(sys_clk), .Reset(Reset), .Start(BtnC_Pulse), .Ack(BtnC_Pulse),  // Debounced BtnC signal
+        .Sw0(Sw0_Pulse), .Sw1(Sw1_Pulse), .Sw2(Sw2_Pulse), .Sw3(Sw3_Pulse),  // Debounced switch signals
+        .BtnC(BtnC_Pulse), .BtnL(BtnL_Pulse), .BtnR(BtnR_Pulse), .BtnU(BtnU_Pulse), .BtnD(BtnD_Pulse), // Debounced button signals
         .minutes(I),
 
         /* Outports (from fpsr) */
         // regular states
         .q_INI(q_INI), .q_IDLE(q_IDLE), .q_GAME(q_GAME), .q_QUIZ(q_QUIZ), .q_LOSE(q_LOSE), .q_WIN(q_WIN),
-        
+
         // game states
         .q_GAME1(q_GAME1), .q_GAME2(q_GAME2), .q_GAME3(q_GAME3),
         .q_GAME1_S1(q_GAME1_S1), .q_GAME1_S2(q_GAME1_S2), .q_GAME1_S3(q_GAME1_S3),
@@ -106,8 +149,8 @@ module first_person_second_row_top (
     );
 
 
+
     /* LOGIC FOR LEDs & SSDs */
-    // TODO: Add logic for SSDs & LEDs
     reg [4:0]   SSD;
 	reg [7:0]   SSD_CATHODES;
     wire [3:0]  SSD7, SSD6, SSD5, SSD4, SSD3, SSD2, SSD1, SSD0;

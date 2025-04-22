@@ -9,8 +9,6 @@
 
 `timescale 1 ns / 100 ps
 
-// TODO: **Add comments for all the games to make everything more clear**
-
 module first_person_second_row (
     input Clk,
     input Reset,
@@ -25,8 +23,6 @@ module first_person_second_row (
 	output q_GAME2_S1, q_GAME2_S2, q_GAME2_S3,
 	output q_GAME3_S1, q_GAME3_S2, q_GAME3_S3,
 
-	// TODO: Figure out functionality for these.
-	// TODO: For example, SSDs can display how many lives we have, game_cnt, etc.
 	output screen,
 	output reg professor,
 	output reg [1:0] game_cnt,
@@ -38,7 +34,6 @@ module first_person_second_row (
 reg [17:0] state;
 assign screen = ((state == GAME) || (state >= GAME1));
 
-// TODO: Change state width
 assign {q_GAME3_S3, q_GAME3_S2, q_GAME3_S1, q_GAME2_S3, q_GAME2_S2, q_GAME2_S1, q_GAME1_S3, q_GAME1_S2, 
 		q_GAME1_S1, q_GAME3, q_GAME2, q_GAME1, q_WIN, q_LOSE, q_QUIZ, q_GAME, q_IDLE, q_INI} = state;
 
@@ -69,8 +64,6 @@ localparam
  GAME3_S2  = 18'b010000000000000000,  // 2^16 = 65536
  GAME3_S3  = 18'b100000000000000000;  // 2^17 = 131072
 
-
-// TODO: Maybe make minutes an input and use this code in the top file
 // min_max is used to keep track of how many minutes we are at. So, in the Quiz state, you only have 3 minutes to answer a question
 localparam MAX_TIME = 120;
 reg [7:0] min_max, min_prev;
