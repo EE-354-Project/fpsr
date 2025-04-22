@@ -12,7 +12,7 @@ module first_person_second_row_top (
 		QuadSpiFlashCS, // Disable the three memory chips
 
         // Reset will be controlled by Sw15 (done in XDC file)
-        ClkPort, Reset, Ack                 // the 100 MHz incoming clock signal 
+        ClkPort, Reset, Ack,                 // the 100 MHz incoming clock signal 
 		
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 		BtnC,                              // the center button (this is our reset in most of our designs)
@@ -29,9 +29,21 @@ module first_person_second_row_top (
 	// Project Specific Inputs
 	input		BtnL, BtnU, BtnD, BtnR, BtnC;	
 	input		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0;
-	
+
+    /* From fpsr module */
+    wire q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN;
+    wire q_GAME1, q_GAME2, q_GAME3;
+    wire q_GAME1_S1, q_GAME1_S2, q_GAME1_S3;
+    wire q_GAME2_S1, q_GAME2_S2, q_GAME2_S3;
+    wire q_GAME3_S1, q_GAME3_S2, q_GAME3_S3;
+    wire screen;
+    wire professor;
+    wire [1:0] game_cnt;
+    wire [2:0] lives;
+    wire [3:0] quiz_cnt;
 	
 	/*  OUTPUTS */
+
 	// Control signals on Memory chips 	(to disable them)
 	output QuadSpiFlashCS;
 	output 	Ld0, Ld1, Ld2, Ld3, Ld4, Ld5, Ld6, Ld7;
@@ -42,20 +54,20 @@ module first_person_second_row_top (
 
 	
 	/*  LOCAL SIGNALS */
-	wire		Reset, ClkPort, Ack;
+	input		Reset, Ack;
 	wire		board_clk, sys_clk;
 
-    // TODO: Ask TAs about this, I have no idea what this even means
-    assign {MemOE, MemWR, RamCS, QuadSpiFlashCS} = 4'b1111;
+    assign QuadSpiFlashCS = 1'b1;
 
     /* board_clk is the buffered (and globally routed) clock that the rest of the design uses */
     BUFGP BUFGP1 (board_clk, ClkPort);
 
     reg [26:0] DIV_CLK;
-    always @(posedge board_clk, posedge Reset, posedge q_INI) begin
-        if (Reset | q_INI)
+    wire [2:0] ssdscan_clk;
+    always @(posedge board_clk, posedge Reset) begin
+        if (Reset)
             DIV_CLK <= 0;
-        else if (!q_QUIZ) // Pause the timer when student is being quizzed
+        else // Pause the timer when student is being quizzed
             DIV_CLK <= DIV_CLK + 1;
     end
 
@@ -64,20 +76,20 @@ module first_person_second_row_top (
 
     // TODO: Possibly use the inc_5s module
     /* Logic to increment I every ~5 seconds */
-    wire timer = DIV_CLK[27]; // Is actually about 6.7 Seconds. If needed, change the DIV_CLK.
+    wire timer = DIV_CLK[26]; // Is actually about 6.7 Seconds. If needed, change the DIV_CLK.
+    reg [7:0] I;
     always @ (posedge timer, posedge Reset, posedge q_INI) begin
         if (Reset | q_INI) I <= 0;
-        else if (timer) I <= I + 1;
+        else if (timer & !q_QUIZ) I <= I + 1;
     end
-
 
     /* Buttons & Switches! */
 
     // Declare wire signals for each SCEN output
     wire BtnR_Pulse, BtnL_Pulse, BtnU_Pulse, BtnD_Pulse, BtnC_Pulse;
-    wire Sw0_Pulse, Sw1_Pulse, Sw2_Pulse, Sw3_Pulse;
+    //wire Sw0_Pulse, Sw1_Pulse, Sw2_Pulse, Sw3_Pulse;
 
-    // Instantiate the debouncers and connect them to the wire signals
+    // Debouncing button using code given in EE354 
     ee354_debouncer #(.N_dc(28)) ee354_debouncer_1 
             (.CLK(sys_clk), .RESET(Reset), .PB(BtnR), .DPB( ), 
             .SCEN(BtnR_Pulse), .MCEN( ), .CCEN( ));
@@ -98,39 +110,26 @@ module first_person_second_row_top (
             (.CLK(sys_clk), .RESET(Reset), .PB(BtnC), .DPB( ), 
             .SCEN(BtnC_Pulse), .MCEN( ), .CCEN( ));
 
-    ee354_debouncer #(.N_dc(28)) ee354_debouncer_6 
-            (.CLK(sys_clk), .RESET(Reset), .PB(Sw0), .DPB( ), 
-            .SCEN(Sw0_Pulse), .MCEN( ), .CCEN( ));
+    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_6 
+    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw0), .DPB( ), 
+    //         .SCEN(Sw0_Pulse), .MCEN( ), .CCEN( ));
 
-    ee354_debouncer #(.N_dc(28)) ee354_debouncer_7 
-            (.CLK(sys_clk), .RESET(Reset), .PB(Sw1), .DPB( ), 
-            .SCEN(Sw1_Pulse), .MCEN( ), .CCEN( ));
+    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_7 
+    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw1), .DPB( ), 
+    //         .SCEN(Sw1_Pulse), .MCEN( ), .CCEN( ));
 
-    ee354_debouncer #(.N_dc(28)) ee354_debouncer_8 
-            (.CLK(sys_clk), .RESET(Reset), .PB(Sw2), .DPB( ), 
-            .SCEN(Sw2_Pulse), .MCEN( ), .CCEN( ));
+    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_8 
+    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw2), .DPB( ), 
+    //         .SCEN(Sw2_Pulse), .MCEN( ), .CCEN( ));
         
-    ee354_debouncer #(.N_dc(28)) ee354_debouncer_9 
-            (.CLK(sys_clk), .RESET(Reset), .PB(Sw3), .DPB( ), 
-            .SCEN(Sw3_Pulse), .MCEN( ), .CCEN( ));
-
-
-    /* From fpsr module */
-    wire q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN;
-    wire q_GAME1, q_GAME2, q_GAME3;
-    wire q_GAME1_S1, q_GAME1_S2, q_GAME1_S3;
-    wire q_GAME2_S1, q_GAME2_S2, q_GAME2_S3;
-    wire q_GAME3_S1, q_GAME3_S2, q_GAME3_S3;
-    wire screen;
-    wire professor;
-    wire [1:0] game_cnt;
-    wire [2:0] lives;
-    wire [3:0] quiz_cnt;
+    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_9 
+    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw3), .DPB( ), 
+    //         .SCEN(Sw3_Pulse), .MCEN( ), .CCEN( ));
 
     first_person_second_row fpsr (
         /* Inputs (to fpsr) */
         .Clk(sys_clk), .Reset(Reset), .Start(BtnC_Pulse), .Ack(BtnC_Pulse),  // Debounced BtnC signal
-        .Sw0(Sw0_Pulse), .Sw1(Sw1_Pulse), .Sw2(Sw2_Pulse), .Sw3(Sw3_Pulse),  // Debounced switch signals
+        .Sw0(Sw0), .Sw1(Sw1), .Sw2(Sw2), .Sw3(Sw3),  // Debounced switch signals
         .BtnC(BtnC_Pulse), .BtnL(BtnL_Pulse), .BtnR(BtnR_Pulse), .BtnU(BtnU_Pulse), .BtnD(BtnD_Pulse), // Debounced button signals
         .minutes(I),
 
@@ -145,15 +144,14 @@ module first_person_second_row_top (
         .q_GAME3_S1(q_GAME3_S1), .q_GAME3_S2(q_GAME3_S2), .q_GAME3_S3(q_GAME3_S3),
 
         // non-state variables
-        .screen(screen), .professor(professor), .game_cnt(game_cnt), .lives(lives), .quiz_cnt(quiz_cnt), .minutes(minutes)
+        .screen(screen), .professor(professor), .game_cnt(game_cnt), .lives(lives), .quiz_cnt(quiz_cnt)
     );
 
-
-
     /* LOGIC FOR LEDs & SSDs */
+
     reg [4:0]   SSD;
 	reg [7:0]   SSD_CATHODES;
-    wire [3:0]  SSD7, SSD6, SSD5, SSD4, SSD3, SSD2, SSD1, SSD0;
+    wire [4:0]  SSD7, SSD6, SSD5, SSD4, SSD3, SSD2, SSD1, SSD0;
 
     // LEDs keep track of which state we are in (mostly for debugging)
     assign {Ld0, Ld1, Ld2, Ld3} = {q_IDLE, (q_GAME1 | q_GAME1_S1 | q_GAME1_S2 | q_GAME1_S3), (q_GAME2 | q_GAME2_S1 | q_GAME2_S2 | q_GAME2_S3), (q_GAME3 | q_GAME3_S1 | q_GAME3_S2 | q_GAME3_S3)};
@@ -176,17 +174,17 @@ module first_person_second_row_top (
 	assign SSD5 = (game_cnt < 3) ? 5'b10000 : 5'b01000;
 
     // Game Count
-	assign SSD4 = game_cnt;
+	assign SSD4 = game_cnt[1:0];
 
     // Quiz Count
-    assign SSD3 = quiz_cnt;
+    assign SSD3 = quiz_cnt[3:0];
 
     // Lives
-	assign SSD2 = lives;
+	assign SSD2 = lives[2:0];
 
     // Minutes
-	assign SSD1 = (q_INI) ? 15 : minutes[7:4];
-	assign SSD0 = (q_INI) ? 15 : minutes[3:0];
+	assign SSD1 = (q_INI) ? 15 : {1'b0, I[7:4]};
+	assign SSD0 = (q_INI) ? 15 : {1'b0, I[3:0]};
 
     always @ (ssdscan_clk, SSD0, SSD1, SSD2, SSD3, SSD4, SSD5, SSD6, SSD7) begin : SSD_SCAN_OUT
         case (ssdscan_clk)

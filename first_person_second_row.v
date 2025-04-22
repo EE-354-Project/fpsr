@@ -17,17 +17,18 @@ module first_person_second_row (
     input Sw0, Sw1, Sw2, Sw3,
     input BtnC, BtnL, BtnR, BtnU, BtnD,
 	input [7:0] minutes,
-	output q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN,
-	output q_GAME1, q_GAME2, q_GAME3,
-	output q_GAME1_S1, q_GAME1_S2, q_GAME1_S3,
-	output q_GAME2_S1, q_GAME2_S2, q_GAME2_S3,
-	output q_GAME3_S1, q_GAME3_S2, q_GAME3_S3,
 
-	output screen,
+
+	output q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN,
+		q_GAME1, q_GAME2, q_GAME3,
+		q_GAME1_S1, q_GAME1_S2, q_GAME1_S3,
+		q_GAME2_S1, q_GAME2_S2, q_GAME2_S3,
+		q_GAME3_S1, q_GAME3_S2, q_GAME3_S3, screen, 
+		
 	output reg professor,
 	output reg [1:0] game_cnt,
 	output reg [2:0] lives,
-	output reg [3:0] quiz_cnt,
+	output reg [3:0] quiz_cnt
 
 );
 
@@ -66,18 +67,23 @@ localparam
 
 // min_max is used to keep track of how many minutes we are at. So, in the Quiz state, you only have 3 minutes to answer a question
 localparam MAX_TIME = 120;
-reg [7:0] min_max, min_prev;
+reg [7:0] min_max;
+
+always @(posedge Clk)
+begin 
+	if (minutes[3:0] == 15) professor <= 1;
+	
+	if ((state == QUIZ) || (state == INI)) professor <= 0;
+end
 
 //start of state machine
 always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
  begin  
 	   if (Reset) 
 	       begin
-			   professor <= 1'bx;
-			   minutes <= 7'bx;
-			   game_cnt <= 2'bx;
-			   quiz_cnt <= 4'bx;
-			   lives <= 3'bx;
+			   game_cnt <= 2'b00;
+			   quiz_cnt <= 4'b0000;
+			   lives <= 3'b011;
 			   state <= INI;
 	       end
        else // under positive edge of the clock
@@ -85,9 +91,8 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
             case (state) // state and data transfers
                  INI:
 					begin
-						professor <= 1'b0;
 						game_cnt <= 2'b00;
-						lives <= 3'b000;
+						lives <= 3'b011;
 						quiz_cnt <= 4'b0000;
 
 						if (Start) state <= IDLE;
@@ -118,14 +123,12 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				// So if you are in the final stretch, you have as much time as you need to answer a question
 				QUIZ:
 					begin
-						professor <= 0;
-
 						// """Correctly use the switches to represent binary to equal a specific number"""
-						if (quiz_cnt == 1)
+						if (quiz_cnt == 0)
 						begin
 							// """Number == 1"""
-							if (Sw0 & !Sw1 & !Sw2 & !Sw3 & BtnC) state <= IDLE;
-							else if (((Sw1 | Sw2 | Sw3) & BtnC) || (minutes == min_max))
+							if (Sw0 & !Sw1 & !Sw2 & !Sw3 & BtnC) begin state <= IDLE; quiz_cnt <= quiz_cnt + 1; end
+							else if (((Sw1 | Sw2 | Sw3) & BtnC) /*|| (minutes >= min_max)*/)
 							begin
 								if (lives == 1) state <= LOSE;
 								else state <= IDLE;
@@ -133,11 +136,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 							end 
 						end
 
-						if (quiz_cnt == 2)
+						else if (quiz_cnt == 1)
 						begin
 							// """Number == 2"""
-							if (!Sw0 & Sw1 & !Sw2 & !Sw3 & BtnC) state <= IDLE;
-							else if (((Sw0 | Sw2 | Sw3) & BtnC) || ( min_max == minutes))
+							if (!Sw0 & Sw1 & !Sw2 & !Sw3 & BtnC) begin state <= IDLE; quiz_cnt <= quiz_cnt + 1; end
+							else if (((Sw0 | Sw2 | Sw3) & BtnC) || ( min_max >= minutes))
 							begin
 								if (lives == 1) state <= LOSE;
 								else state <= IDLE;
@@ -145,11 +148,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 							end 
 						end
 
-						if (quiz_cnt >= 3)
+						else if (quiz_cnt >= 2)
 						begin
 							// """Number == 8"""
-							if (!Sw0 & !Sw1 & !Sw2 & Sw3 & BtnC) state <= IDLE;
-							else if (((Sw0 | Sw2 | Sw1) & BtnC) || (min_max == minutes))
+							if (!Sw0 & !Sw1 & !Sw2 & Sw3 & BtnC) begin state <= IDLE; quiz_cnt <= quiz_cnt + 1; end
+							else if (((Sw0 | Sw2 | Sw1) & BtnC) || (min_max >= minutes))
 							begin
 								if (lives == 1) state <= LOSE;
 								else state <= IDLE;
@@ -254,7 +257,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 				GAME3:
 					begin
-						if (Sw3 & !BtnU & !BtnD) state <= GAME3_S1;
+						if (Sw3 & !BtnU & !BtnD & (!BtnL & !BtnR & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S1;
 
 						// This game is a combination of Switches and Buttons
 						// The sequence is Sw3, BtnU, BtnD
@@ -266,16 +269,16 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 				GAME3_S1:
 					begin
-						if (Sw3 & BtnR & !BtnD) state <= GAME3_S2;
-						else if (!Sw3 | BtnD) state <= IDLE;
+						if (Sw3 & BtnR & !BtnD & (!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S2;
+						else if (!Sw3 | BtnD | !(!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= IDLE;
 
 						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME3_S2:
 					begin
-						if (Sw3 & !BtnR & BtnD) state <= GAME3_S3;
-						else if (!Sw3 | BtnR) state <= IDLE;
+						if (Sw3 & !BtnR & BtnD & (!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S3;
+						else if (!Sw3 | BtnR | !(!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= IDLE;
 
 						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
 						if (minutes >= MAX_TIME) state <= LOSE;
