@@ -31,8 +31,10 @@ module first_person_second_row_top (
 	input		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0;
 
     /* From fpsr module */
-    wire q_INI, q_IDLE, q_GAME, q_QUIZ, q_LOSE, q_WIN;
-    wire q_GAME1, q_GAME2, q_GAME3;
+    wire q_INI,    q_IDLE,  q_GAME,  q_QUIZ, 
+         q_QUIZ_1, q_QUIZ_2, q_QUIZ_3,
+         q_LOSE,   q_WIN;
+    wire q_GAME1,  q_GAME2,  q_GAME3;
     wire q_GAME1_S1, q_GAME1_S2, q_GAME1_S3;
     wire q_GAME2_S1, q_GAME2_S2, q_GAME2_S3;
     wire q_GAME3_S1, q_GAME3_S2, q_GAME3_S3;
@@ -80,7 +82,7 @@ module first_person_second_row_top (
     reg [7:0] I;
     always @ (posedge timer, posedge Reset, posedge q_INI) begin
         if (Reset | q_INI) I <= 0;
-        else if (timer & !q_QUIZ) I <= I + 1;
+        else if ((timer & !q_QUIZ) | (q_QUIZ & (I[3:0] == 4'b1111))) I <= I + 1;
     end
 
     /* Buttons & Switches! */
@@ -110,32 +112,31 @@ module first_person_second_row_top (
             (.CLK(sys_clk), .RESET(Reset), .PB(BtnC), .DPB( ), 
             .SCEN(BtnC_Pulse), .MCEN( ), .CCEN( ));
 
-    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_6 
-    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw0), .DPB( ), 
-    //         .SCEN(Sw0_Pulse), .MCEN( ), .CCEN( ));
 
-    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_7 
-    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw1), .DPB( ), 
-    //         .SCEN(Sw1_Pulse), .MCEN( ), .CCEN( ));
-
-    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_8 
-    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw2), .DPB( ), 
-    //         .SCEN(Sw2_Pulse), .MCEN( ), .CCEN( ));
-        
-    // ee354_debouncer #(.N_dc(28)) ee354_debouncer_9 
-    //         (.CLK(sys_clk), .RESET(Reset), .PB(Sw3), .DPB( ), 
-    //         .SCEN(Sw3_Pulse), .MCEN( ), .CCEN( ));
-
+    /* Module Instantiation */
     first_person_second_row fpsr (
         /* Inputs (to fpsr) */
-        .Clk(sys_clk), .Reset(Reset), .Start(BtnC_Pulse), .Ack(BtnC_Pulse),  // Debounced BtnC signal
-        .Sw0(Sw0), .Sw1(Sw1), .Sw2(Sw2), .Sw3(Sw3),  // Debounced switch signals
-        .BtnC(BtnC_Pulse), .BtnL(BtnL_Pulse), .BtnR(BtnR_Pulse), .BtnU(BtnU_Pulse), .BtnD(BtnD_Pulse), // Debounced button signals
+        .Clk(sys_clk),            // slow clock slice
+        .Reset(Reset),
+        .Start(BtnC_Pulse),             // debounced center button
+        .Ack(BtnC_Pulse),
+        .Sw0(Sw0), .Sw1(Sw1),    // raw switch inputs
+        .Sw2(Sw2), .Sw3(Sw3),
+        .BtnC(BtnC_Pulse),             // debounced buttons
+        .BtnL(BtnL_Pulse),
+        .BtnR(BtnR_Pulse),
+        .BtnU(BtnU_Pulse),
+        .BtnD(BtnD_Pulse),
         .minutes(I),
 
         /* Outports (from fpsr) */
-        // regular states
-        .q_INI(q_INI), .q_IDLE(q_IDLE), .q_GAME(q_GAME), .q_QUIZ(q_QUIZ), .q_LOSE(q_LOSE), .q_WIN(q_WIN),
+
+        // primary states (one‐hot)
+        .q_INI(q_INI),
+        .q_IDLE(q_IDLE),
+        .q_GAME(q_GAME),
+        .q_QUIZ(q_QUIZ), .q_QUIZ_1(q_QUIZ_1), .q_QUIZ_2(q_QUIZ_2), .q_QUIZ_3(q_QUIZ_3), 
+        .q_LOSE(q_LOSE), .q_WIN(q_WIN),
 
         // game states
         .q_GAME1(q_GAME1), .q_GAME2(q_GAME2), .q_GAME3(q_GAME3),
@@ -143,7 +144,7 @@ module first_person_second_row_top (
         .q_GAME2_S1(q_GAME2_S1), .q_GAME2_S2(q_GAME2_S2), .q_GAME2_S3(q_GAME2_S3),
         .q_GAME3_S1(q_GAME3_S1), .q_GAME3_S2(q_GAME3_S2), .q_GAME3_S3(q_GAME3_S3),
 
-        // non-state variables
+        // non-state outputs
         .screen(screen), .professor(professor), .game_cnt(game_cnt), .lives(lives), .quiz_cnt(quiz_cnt)
     );
 
@@ -154,10 +155,10 @@ module first_person_second_row_top (
     wire [4:0]  SSD7, SSD6, SSD5, SSD4, SSD3, SSD2, SSD1, SSD0;
 
     // LEDs keep track of which state we are in (mostly for debugging)
-    assign {Ld0, Ld1, Ld2, Ld3} = {q_IDLE, (q_GAME1 | q_GAME1_S1 | q_GAME1_S2 | q_GAME1_S3), (q_GAME2 | q_GAME2_S1 | q_GAME2_S2 | q_GAME2_S3), (q_GAME3 | q_GAME3_S1 | q_GAME3_S2 | q_GAME3_S3)};
-    assign {Ld4, Ld5, Ld6, Ld7} = {(q_GAME1_S1 | q_GAME2_S1 | q_GAME3_S1), (q_GAME1_S2 | q_GAME2_S2 | q_GAME3_S2), (q_GAME1_S3 | q_GAME2_S3 | q_GAME3_S3), q_QUIZ};
+    assign {Ld0, Ld1, Ld2, Ld3} = {(q_IDLE | q_QUIZ_1), (q_GAME1 | q_GAME1_S1 | q_GAME1_S2 | q_GAME1_S3 | q_QUIZ_2), (q_GAME2 | q_GAME2_S1 | q_GAME2_S2 | q_GAME2_S3 | q_QUIZ_3), (q_GAME3 | q_GAME3_S1 | q_GAME3_S2 | q_GAME3_S3)};
+    assign {Ld4, Ld5, Ld6, Ld7} = {(q_GAME1_S1 | q_GAME2_S1 | q_GAME3_S1), (q_GAME1_S2 | q_GAME2_S2 | q_GAME3_S2), (q_GAME1_S3 | q_GAME2_S3 | q_GAME3_S3), (q_QUIZ | q_QUIZ_1 | q_QUIZ_2 | q_QUIZ_3)};
 
-    assign ssdscan_clk = DIV_CLK[20:18];
+    assign ssdscan_clk = DIV_CLK[19:17];
 
     assign An0 = ~(ssdscan_clk == 3'b000);
     assign An1 = ~(ssdscan_clk == 3'b001);
@@ -180,11 +181,11 @@ module first_person_second_row_top (
     assign SSD3 = quiz_cnt[3:0];
 
     // Lives
-	assign SSD2 = lives[2:0];
+	assign SSD2 = (q_WIN) ? 5'b10001 : (q_LOSE) ? 5'b10011 : lives[2:0];
 
     // Minutes
-	assign SSD1 = (q_INI) ? 15 : {1'b0, I[7:4]};
-	assign SSD0 = (q_INI) ? 15 : {1'b0, I[3:0]};
+	assign SSD1 = (q_WIN) ? 5'b10010 : (q_LOSE) ? 5'b10011 : (q_INI) ? 15 : {1'b0, I[7:4]};
+	assign SSD0 = (q_WIN) ? 5'b10001 : (q_LOSE) ? 5'b10011 : (q_INI) ? 15 : {1'b0, I[3:0]};
 
     always @ (ssdscan_clk, SSD0, SSD1, SSD2, SSD3, SSD4, SSD5, SSD6, SSD7) begin : SSD_SCAN_OUT
         case (ssdscan_clk)
@@ -223,6 +224,9 @@ module first_person_second_row_top (
 			5'b01110: SSD_CATHODES = 8'b01100000; // E
 			5'b01111: SSD_CATHODES = 8'b01110000; // F
             5'b10000: SSD_CATHODES = 8'b11111111; // OFF
+            5'b10001: SSD_CATHODES = 8'b10001000; // Y
+            5'b10010: SSD_CATHODES = 8'b00000100; // a (lowercase A)
+            5'b10011: SSD_CATHODES = 8'b11100010; // L
 			default: SSD_CATHODES  = 8'bXXXXXXXX; // default is not needed as we covered all cases
 		endcase
 	end	
