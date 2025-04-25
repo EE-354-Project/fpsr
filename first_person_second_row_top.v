@@ -82,7 +82,7 @@ module first_person_second_row_top (
     reg [7:0] I;
     always @ (posedge timer, posedge Reset, posedge q_INI) begin
         if (Reset | q_INI) I <= 0;
-        else if ((timer & !q_QUIZ) | (q_QUIZ & (I[3:0] == 4'b1111))) I <= I + 1;
+        else if ((timer & !q_QUIZ) | (q_QUIZ & (I[3:0] == 4'b1111)) & !(q_WIN) & !(q_LOSE)) I <= I + 1;
     end
 
     /* Buttons & Switches! */
