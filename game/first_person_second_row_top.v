@@ -172,7 +172,7 @@ module first_person_second_row_top (
     // 3 Games Status (light up if game is completed)
     assign SSD7 = (q_WIN | q_LOSE) ? 5'b10000 : (game_cnt < 1) ? 5'b10000 : 5'b01000;
 	assign SSD6 = (q_WIN | q_LOSE) ? 5'b10000 : (game_cnt < 2) ? 5'b10000 : 5'b01000;
-	assign SSD5 = (game_cnt < 3) ? 5'b10000 : 5'b01000;
+	assign SSD5 = (q_WIN | q_LOSE) ? 5'b10000 : (game_cnt < 3) ? 5'b10000 : 5'b01000;
 
     // Game Count
 	assign SSD4 = (q_WIN | q_LOSE) ? 5'b10000 : game_cnt[1:0];

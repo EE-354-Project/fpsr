@@ -5,8 +5,8 @@ module board_controller(
 	input bright,
     input rst,
     input [9:0] hCount, vCount,
-	output reg [11:0] rgb,
-	output reg [11:0] background
+	output reg [11:0] rgb
+	//output reg [11:0] background
    );
 	wire block_fill;
 
@@ -14,6 +14,7 @@ module board_controller(
 	reg [9:0] xpos, ypos;
 	
 	parameter GREEN = 12'b0000_1111_0000;
+	parameter WHITE = 12'b1111_1111_1111;
 	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
@@ -23,7 +24,7 @@ module board_controller(
 		else if (block_fill) 
 			rgb = GREEN; 
 		else	
-			rgb=background;
+			rgb = 12'b1111_1111_1111; // White
 	end
 	
     //the +-90 for the positions give the dimension of the block (i.e. it will be 180 pixels tall and 300 pixels wide)
