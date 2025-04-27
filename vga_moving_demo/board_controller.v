@@ -13,7 +13,8 @@ module board_controller(
     //these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
 	reg [9:0] xpos, ypos;
 	
-	parameter GREEN = 12'b0000_0111_0000;
+	parameter GREEN = 12'b0000_1111_0000;
+	parameter WHITE = 12'b1111_1111_1111;
 	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
@@ -23,7 +24,7 @@ module board_controller(
 		else if (block_fill) 
 			rgb = GREEN; 
 		else	
-			rgb=background;
+			rgb = 12'b1111_1111_1111; // White
 	end
 	
     //the +-90 for the positions give the dimension of the block (i.e. it will be 180 pixels tall and 300 pixels wide)
