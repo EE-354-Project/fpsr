@@ -74,7 +74,7 @@ module vga_top(
 	end
 
 	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	me_controller mc(.clk(move_clk), .bright(bright), .rst(BtnC), .enable(1'b1), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(me_rgb), .background(background));
+	me_controller mc(.clk(move_clk), .bright(bright), .rst(BtnC), .en(1'b1), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(me_rgb), .background(background));
 	board_controller bc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(board_rgb), .background(background));
 	seats_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(seats_rgb), .background(background));
 	podium_controller pc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(podium_rgb), .background(background));
