@@ -4,6 +4,7 @@ module me_controller(
 	input clk, //this clock must be a slow enough clock to view the changing positions of the objects
 	input bright,
 	input rst,
+	input enable,
 	input up, input down, input left, input right,
 	input [9:0] hCount, vCount,
 	input [11:0] background,
@@ -21,7 +22,7 @@ module me_controller(
 	always@ (*) begin
     	if(~bright )	//force black if not inside the display area
 			rgb = 12'b0000_0000_0000;
-		else if (block_fill) 
+		else if (enable && block_fill) 
 			rgb = RED; 
 		else	
 			rgb=background;
@@ -37,7 +38,7 @@ module me_controller(
 			xpos<=450;
 			ypos<=250;
 		end
-		else if (clk) begin
+		else if (clk && enable) begin
 		
 		/* Note that the top left of the screen does NOT correlate to vCount=0 and hCount=0. The display_controller.v file has the 
 			synchronizing pulses for both the horizontal sync and the vertical sync begin at vcount=0 and hcount=0. Recall that after 
