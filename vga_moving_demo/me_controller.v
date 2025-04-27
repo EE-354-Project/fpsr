@@ -1,13 +1,13 @@
 `timescale 1ns / 1ps
 
-module block_controller(
+module me_controller(
 	input clk, //this clock must be a slow enough clock to view the changing positions of the objects
 	input bright,
 	input rst,
 	input up, input down, input left, input right,
 	input [9:0] hCount, vCount,
-	output reg [11:0] rgb,
-	output reg [11:0] background
+	input [11:0] background,
+	output reg [11:0] rgb
    );
 	wire block_fill;
 	
@@ -46,43 +46,26 @@ module block_controller(
 			corresponds to ~(783,515).  
 		*/
 			if(right) begin
-				xpos<=xpos+2; //change the amount you increment to make the speed faster 
+				xpos<=xpos+1; //change the amount you increment to make the speed faster 
 				if(xpos==800) //these are rough values to attempt looping around, you can fine-tune them to make it more accurate- refer to the block comment above
 					xpos<=150;
 			end
 			else if(left) begin
-				xpos<=xpos-2;
+				xpos<=xpos-1;
 				if(xpos==150)
 					xpos<=800;
 			end
 			else if(up) begin
-				ypos<=ypos-2;
+				ypos<=ypos-1;
 				if(ypos==34)
 					ypos<=514;
 			end
 			else if(down) begin
-				ypos<=ypos+2;
+				ypos<=ypos+1;
 				if(ypos==514)
 					ypos<=34;
 			end
 		end
 	end
-	
-	//the background color reflects the most recent button press
-	always@(posedge clk, posedge rst) begin
-		if(rst)
-			background <= 12'b1111_1111_1111;
-		else 
-			if(right)
-				background <= 12'b1111_1111_0000;
-			else if(left)
-				background <= 12'b0000_1111_1111;
-			else if(down)
-				background <= 12'b0000_1111_0000;
-			else if(up)
-				background <= 12'b0000_0000_1111;
-	end
-
-	
 	
 endmodule

@@ -46,7 +46,7 @@ module vga_top(
 	wire[15:0] score;
 	wire up,down,left,right;
 	wire [3:0] anode;
-	wire [11:0] block_rgb, board_rgb, rgb;
+	wire [11:0] me_rgb, board_rgb, seats_rgb, podium_rgb, rgb;
 	wire rst;
 	
 	reg [3:0]	SSD;
@@ -64,10 +64,20 @@ module vga_top(
 	end
 	wire move_clk;
 	assign move_clk=DIV_CLK[19]; //slower clock to drive the movement of objects on the vga screen
-	wire [11:0] background;
+	// Define color parameters
+	parameter WHITE = 12'b1111_1111_1111;
+
+	// Set the background color to white
+	reg [11:0] background;
+	always @(*) begin
+		background = WHITE;
+	end
+
 	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	block_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(block_rgb), .background(background));
+	me_controller mc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(me_rgb), .background(background));
 	board_controller bc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(board_rgb), .background(background));
+	seats_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(seats_rgb), .background(background));
+	podium_controller pc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(podium_rgb), .background(background));
 
 	// RGB priority logic - implemented as an always block for scalability
 	// This can be easily extended when more controllers are added
@@ -80,9 +90,17 @@ module vga_top(
 		if (board_rgb != background)
 			rgb_reg = board_rgb;
 		
-		// Apply block RGB if it's not the background color (highest priority)
-		if (block_rgb != background)
-			rgb_reg = block_rgb;
+		// Apply seats RGB if it's not the background color
+		if (seats_rgb != background)
+			rgb_reg = seats_rgb;
+
+		// Apply podium RGB if it's not the background color
+		if (podium_rgb != background)
+			rgb_reg = podium_rgb;
+		
+		// Apply block RGB if it's not the background color (**HIGHEST PRIORITY**)
+		if (me_rgb != background)
+			rgb_reg = me_rgb;
 		
 		// Future controllers can be added here with appropriate priority
 		// Example:
