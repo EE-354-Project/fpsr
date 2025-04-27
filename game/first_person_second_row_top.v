@@ -12,12 +12,13 @@ module first_person_second_row_top (
 		QuadSpiFlashCS, // Disable the three memory chips
 
         // Reset will be controlled by Sw15 (done in XDC file)
-        ClkPort, Reset, Ack,                 // the 100 MHz incoming clock signal 
+        // Move will be controlled by Sw14 (done in XDC file)
+        ClkPort, Reset, Ack, Move,                // the 100 MHz incoming clock signal 
 		
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 		BtnC,                              // the center button (this is our reset in most of our designs)
 		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0, // 8 switches
-		Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, // 8 LEDs
+		Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, Ld14 // 8 LEDs
 		An3, An2, An1, An0,			       // 4 anodes
 		An7, An6, An5, An4,                // another 4 anodes which are not used
 		Ca, Cb, Cc, Cd, Ce, Cf, Cg,        // 7 cathodes
@@ -31,7 +32,7 @@ module first_person_second_row_top (
 	input		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0;
 
     /* From fpsr module */
-    wire q_INI,    q_IDLE,  q_GAME,  q_QUIZ, 
+    wire q_INI,    q_IDLE,  q_GAME,  q_MOVE, q_QUIZ, 
          q_QUIZ_1, q_QUIZ_2, q_QUIZ_3,
          q_LOSE,   q_WIN;
     wire q_GAME1,  q_GAME2,  q_GAME3;
@@ -48,7 +49,7 @@ module first_person_second_row_top (
 
 	// Control signals on Memory chips 	(to disable them)
 	output QuadSpiFlashCS;
-	output 	Ld0, Ld1, Ld2, Ld3, Ld4, Ld5, Ld6, Ld7;
+	output 	Ld0, Ld1, Ld2, Ld3, Ld4, Ld5, Ld6, Ld7, Ld14;
 	// SSD Outputs
 	output 	Cg, Cf, Ce, Cd, Cc, Cb, Ca, Dp;
 	output 	An0, An1, An2, An3;	
@@ -56,7 +57,7 @@ module first_person_second_row_top (
 
 	
 	/*  LOCAL SIGNALS */
-	input		Reset, Ack;
+	input		Reset, Ack, Move;
 	wire		board_clk, sys_clk;
 
     assign QuadSpiFlashCS = 1'b1;
@@ -128,6 +129,7 @@ module first_person_second_row_top (
         .BtnU(BtnU_Pulse),
         .BtnD(BtnD_Pulse),
         .minutes(I),
+        .move(Move),
 
         /* Outports (from fpsr) */
 
@@ -135,6 +137,7 @@ module first_person_second_row_top (
         .q_INI(q_INI),
         .q_IDLE(q_IDLE),
         .q_GAME(q_GAME),
+        .q_MOVE(q_MOVE),
         .q_QUIZ(q_QUIZ), .q_QUIZ_1(q_QUIZ_1), .q_QUIZ_2(q_QUIZ_2), .q_QUIZ_3(q_QUIZ_3), 
         .q_LOSE(q_LOSE), .q_WIN(q_WIN),
 
@@ -148,8 +151,16 @@ module first_person_second_row_top (
         .screen(screen), .professor(professor), .game_cnt(game_cnt), .lives(lives), .quiz_cnt(quiz_cnt)
     );
 
-    /* LOGIC FOR LEDs & SSDs */
+    /* Glue Logic for VGA */
+    wire left, right, up, down;
+    assign {left, right, up, down} = (q_MOVE) ? {BtnL, BtnR, BtnU, BtnD} : 4'b0000; // Uses raw button presses
 
+    vga_top vg (
+        .ClkPort(sys_clk), .left(left), .right(right), .up(up), .down(down), .Reset(Reset),
+        .q_Q1(q_QUIZ_1), .q_Q2(q_QUIZ_2), .q_Q3(q_QUIZ_3), .q_G1(q_GAME1), .q_G2(q_GAME2), .q_G3(q_GAME3)
+    );
+
+    /* LOGIC FOR LEDs & SSDs */
     reg [4:0]   SSD;
 	reg [7:0]   SSD_CATHODES;
     wire [4:0]  SSD7, SSD6, SSD5, SSD4, SSD3, SSD2, SSD1, SSD0;
@@ -157,6 +168,7 @@ module first_person_second_row_top (
     // LEDs keep track of which state we are in (mostly for debugging)
     assign {Ld0, Ld1, Ld2, Ld3} = {(q_IDLE | q_QUIZ_1), (q_GAME1 | q_GAME1_S1 | q_GAME1_S2 | q_GAME1_S3 | q_QUIZ_2), (q_GAME2 | q_GAME2_S1 | q_GAME2_S2 | q_GAME2_S3 | q_QUIZ_3), (q_GAME3 | q_GAME3_S1 | q_GAME3_S2 | q_GAME3_S3)};
     assign {Ld4, Ld5, Ld6, Ld7} = {(q_GAME1_S1 | q_GAME2_S1 | q_GAME3_S1), (q_GAME1_S2 | q_GAME2_S2 | q_GAME3_S2), (q_GAME1_S3 | q_GAME2_S3 | q_GAME3_S3), (q_QUIZ | q_QUIZ_1 | q_QUIZ_2 | q_QUIZ_3)};
+    assign Ld14 = q_MOVE; 
 
     assign ssdscan_clk = DIV_CLK[19:17];
 

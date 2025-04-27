@@ -23,32 +23,21 @@
 //////////////////////////////////////////////////////////////////////////////////
 module vga_top(
 	input ClkPort,
-	input BtnC,
-	input BtnU,
-	input BtnR,
-	input BtnL,
-	input BtnD,
+	input left, right, up, down,
+	input q_Q1, q_Q2, q_Q3,
+    input q_G1, q_G2, q_G3,
+	input Reset,
 	//VGA signal
 	output hSync, vSync,
-	output [3:0] vgaR, vgaG, vgaB,
-	
-	//SSG signal 
-	
-	output MemOE, MemWR, RamCS, QuadSpiFlashCS
+	output [3:0] vgaR, vgaG, vgaB
 	);
-	wire Reset;
-	assign Reset=BtnC;
+
 	wire bright;
 	wire[9:0] hc, vc;
 	wire[15:0] score;
 	wire [3:0] anode;
-	wire [11:0] rgb, bc_rgb, fc_rgb;
+	wire [11:0] rgb, bc_rgb, fc_rgb, sc_rgb, q1_rgb, q2_rgb, q3_rgb, sq_rgb, sw_rgb, g1_rgb, g2_rgb;
 	wire rst;
-	
-	reg [3:0]	SSD;
-	wire [3:0]	SSD3, SSD2, SSD1, SSD0;
-	reg [7:0]  	SSD_CATHODES;
-	wire [1:0] 	ssdscan_clk;
 	
 	reg [27:0]	DIV_CLK;
 	always @ (posedge ClkPort, posedge Reset)  
@@ -60,55 +49,28 @@ module vga_top(
 	end
 	wire move_clk;
 	assign move_clk=DIV_CLK[19]; //slower clock to drive the movement of objects on the vga screen
-	reg [11:0] background = 12'b000000000000;
-	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	// TODO: Change rst to Sw15
-	switch_controller sc(.clk(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(rgb), .en(1'b1), .background(fc_rgb));
-	fpsr_controller fc(.clk(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(fc_rgb), .en(1'b1), .background(bc_rgb));
-	board_controller bc(.clk(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(bc_rgb));
-	
 
+	wire [3:0] bg_R, bg_G, bg_B;
+	assign bc_rgb = {bg_R, bg_G, bg_B};
 
+	background_vga bg(.ClkPort(ClkPort), .left(left), .right(right), .up(up), .down(down), .Reset(Reset), .hSync(hSync), .vSync(vSync), .vgaR(bg_R), .vgaG(bg_G), .vgaB(bg_B), .bright(bright), .hc(hc), .vc(vc));
+
+	// Game Prompts
+	g3_controller g3(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(rgb), .en(q_G3), .background(g2_rgb)); // q_G3
+	g2_controller g2(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(g2_rgb), .en(q_G2), .background(g1_rgb)); // q_G2
+	g1_controller g1(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(g1_rgb), .en(q_G1), .background(sw_rgb)); // q_G1
+	sw_off_controller swc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(sw_rgb), .en(q_G1 | q_G2 | q_G3), .background(sq_rgb));
+	sequence_controller sq(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(sq_rgb), .en(q_G1 | q_G2 | q_G3), .background(q3_rgb)); // q_G1, q_G2, q_G3
+
+	// Quiz Prompts
+	q3_controller q3(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q3_rgb), .en(q_Q3), .background(q2_rgb)); // q_Q3
+	q2_controller q2(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q2_rgb), .en(q_Q2), .background(q1_rgb)); // q_Q2
+	q1_controller q1(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q1_rgb), .en(q_Q1), .background(sc_rgb)); // q_Q1
+	switch_controller sc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(sc_rgb), .en(1'b1), .background(fc_rgb)); // enable should be q_QUIZ, q_Q1, q_Q2, q_Q3
+	fpsr_controller fc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(fc_rgb), .en(1'b1), .background(bc_rgb)); // enable should be "		"
 	
 	assign vgaR = rgb[11 : 8];
 	assign vgaG = rgb[7  : 4];
 	assign vgaB = rgb[3  : 0];
-	
-	// disable mamory ports
-	assign {MemOE, MemWR, RamCS, QuadSpiFlashCS} = 4'b1111;
-	
-	//------------
-// SSD (Seven Segment Display)
-	// reg [3:0]	SSD;
-	// wire [3:0]	SSD3, SSD2, SSD1, SSD0;
-	
-	//SSDs display 
-	//to show how we can interface our "game" module with the SSD's, we output the 12-bit rgb background value to the SSD's
-	assign SSD3 = 4'b0000;
-	assign SSD2 = background[11:8];
-	assign SSD1 = background[7:4];
-	assign SSD0 = background[3:0];
-
-
-	// need a scan clk for the seven segment display 
-	
-	// 100 MHz / 2^18 = 381.5 cycles/sec ==> frequency of DIV_CLK[17]
-	// 100 MHz / 2^19 = 190.7 cycles/sec ==> frequency of DIV_CLK[18]
-	// 100 MHz / 2^20 =  95.4 cycles/sec ==> frequency of DIV_CLK[19]
-	
-	// 381.5 cycles/sec (2.62 ms per digit) [which means all 4 digits are lit once every 10.5 ms (reciprocal of 95.4 cycles/sec)] works well.
-	
-	//                  --|  |--|  |--|  |--|  |--|  |--|  |--|  |--|  |   
-    //                    |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
-	//  DIV_CLK[17]       |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|
-	//
-	//               -----|     |-----|     |-----|     |-----|     |
-    //                    |  0  |  1  |  0  |  1  |     |     |     |     
-	//  DIV_CLK[18]       |_____|     |_____|     |_____|     |_____|
-	//
-	//         -----------|           |-----------|           |
-    //                    |  0     0  |  1     1  |           |           
-	//  DIV_CLK[19]       |___________|           |___________|
-	//
 
 endmodule
