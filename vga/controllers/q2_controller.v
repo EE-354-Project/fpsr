@@ -12,8 +12,8 @@ module q2_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 415;
-	localparam Y0 = 277;
+	localparam X0 = 438;
+	localparam Y0 = 190;
 	localparam W  = 24;
 	localparam H  = 11;
 	localparam ROW_W = 4, COL_W = 5;

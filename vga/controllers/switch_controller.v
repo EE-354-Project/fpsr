@@ -10,8 +10,8 @@ module switch_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 260;
-	localparam Y0 = 277;
+	localparam X0 = 375;
+	localparam Y0 = 145;
 	localparam W  = 150;
 	localparam H  = 11;
 	localparam ROW_W = 4, COL_W = 8;

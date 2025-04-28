@@ -176,7 +176,7 @@ module first_person_second_row_top (
     // LEDs keep track of which state we are in (mostly for debugging)
     assign {Ld0, Ld1, Ld2, Ld3} = {(q_IDLE | q_QUIZ_1), (q_GAME1 | q_GAME1_S1 | q_GAME1_S2 | q_GAME1_S3 | q_QUIZ_2), (q_GAME2 | q_GAME2_S1 | q_GAME2_S2 | q_GAME2_S3 | q_QUIZ_3), (q_GAME3 | q_GAME3_S1 | q_GAME3_S2 | q_GAME3_S3)};
     assign {Ld4, Ld5, Ld6, Ld7} = {(q_GAME1_S1 | q_GAME2_S1 | q_GAME3_S1), (q_GAME1_S2 | q_GAME2_S2 | q_GAME3_S2), (q_GAME1_S3 | q_GAME2_S3 | q_GAME3_S3), (q_QUIZ | q_QUIZ_1 | q_QUIZ_2 | q_QUIZ_3)};
-    assign Ld14 = q_MOVE; 
+    assign Ld14 = q_MOVE | seat; 
 
     assign ssdscan_clk = DIV_CLK[19:17];
 

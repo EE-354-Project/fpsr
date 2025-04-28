@@ -10,8 +10,8 @@ module fpsr_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 250;
-	localparam Y0 = 250;
+	localparam X0 = 372;
+	localparam Y0 = 100;
 	localparam W  = 156;
 	localparam H  = 11;
 	localparam ROW_W = 4, COL_W = 8;
