@@ -48,7 +48,7 @@ module vga_top(
 	wire up,down,left,right;
 	wire [3:0] anode;
 
-	wire [11:0] me_rgb, board_rgb, seats_rgb, podium_rgb, rgb, door_rgb, task_rgb, roblox_rgb, kanye_rgb, lebron_rgb, italian_rgb, folt_rgb, chillguy_rgb;
+	wire [11:0] me_rgb, board_rgb, seats_rgb, podium_rgb, rgb, door_rgb, task_rgb, roblox_rgb, kanye_rgb, lebron_rgb, italian_rgb, folt_rgb, chillguy_rgb, gandhi_rgb;
 	wire task_enable_switch; // open/close task screen
 	wire character_in_door; // wire to connect the in_door signal from me_controller
 	wire character_in_seat; // wire to connect the in_seat signal from me_controller
@@ -96,7 +96,7 @@ module vga_top(
 	italian_controller italian_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(italian_rgb), .background(background));
 	folt_controller folt_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(folt_rgb), .background(background));
 	chillguy_controller chillguy_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(chillguy_rgb), .background(background));
-
+	gandhi_controller gandhi_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(BtnC), .looking_up(BtnC), .hCount(hc), .vCount(vc), .rgb(gandhi_rgb), .background(background));
 
 	// Logic for the door indicator square
 	parameter INDICATOR_SIZE = 20; // Size of the square in pixels
@@ -129,8 +129,10 @@ module vga_top(
 
 		if (podium_rgb != background)
 			rgb_reg = podium_rgb;
+
+		if (gandhi_rgb != background)
+			rgb_reg = gandhi_rgb;
 		
-		// Add the new sprite controllers with appropriate priority
 		if (italian_rgb != background)
 			rgb_reg = italian_rgb;
 			
