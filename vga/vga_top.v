@@ -23,12 +23,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 module vga_top(
 	input ClkPort,
-	input left, right, up, down,
+	input left, right, up, down, screen,
 	input q_Q1, q_Q2, q_Q3,
     input q_G1, q_G2, q_G3,
 	input Reset,
 	//VGA signal
-	output hSync, vSync,
+	output hSync, vSync, door, seat,
 	output [3:0] vgaR, vgaG, vgaB
 	);
 
@@ -53,7 +53,7 @@ module vga_top(
 	wire [3:0] bg_R, bg_G, bg_B;
 	assign bc_rgb = {bg_R, bg_G, bg_B};
 
-	background_vga bg(.ClkPort(ClkPort), .left(left), .right(right), .up(up), .down(down), .Reset(Reset), .hSync(hSync), .vSync(vSync), .vgaR(bg_R), .vgaG(bg_G), .vgaB(bg_B), .bright(bright), .hc(hc), .vc(vc));
+	background_vga bg(.ClkPort(ClkPort), .left(left), .right(right), .up(up), .down(down), .Reset(Reset), .hSync(hSync), .vSync(vSync), .vgaR(bg_R), .vgaG(bg_G), .vgaB(bg_B), .bright(bright), .hc(hc), .vc(vc), .character_in_door(door), .character_in_seat(seat), .task_enable_switch(screen));
 
 	// Game Prompts
 	g3_controller g3(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(rgb), .en(q_G3), .background(g2_rgb)); // q_G3

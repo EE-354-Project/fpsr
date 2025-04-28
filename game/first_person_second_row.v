@@ -14,7 +14,7 @@ module first_person_second_row (
     input Reset,
     input Start,
     input Ack,
-    input Sw0, Sw1, Sw2, Sw3, Sw4, Sw5, Sw6, Sw7, move,
+    input Sw0, Sw1, Sw2, Sw3, Sw4, Sw5, Sw6, Sw7, move, door, seat,
     input BtnC, BtnL, BtnR, BtnU, BtnD,
 	input [7:0] minutes,
 
@@ -34,12 +34,10 @@ module first_person_second_row (
 
 reg flag;
 reg [21:0] state;
-wire door, move_en;
 
 // Only allow movement when 1 hr has passed or when we complete all of the games
 // TODO: Change door functionality (should be an input eventually)
 assign move_en = (minutes >= 60 || game_cnt >= 3);
-assign door = 1'b0;
 
 reg game_en;
 
@@ -90,7 +88,7 @@ localparam MAX_TIME = 120;
 reg [7:0] min_max;
 assign screen = ((state == GAME) || (state >= GAME1));
 
-assign professor = (minutes[3:0] == 4'b1111);
+assign professor = (minutes[3:0] == 4'b1111) & !(QUIZ | QUIZ_1 | QUIZ_2 | QUIZ_3);
 
 //start of state machine
 always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
@@ -150,6 +148,12 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if (quiz_cnt == 1) state <= QUIZ_2;
 
 						else if (quiz_cnt >= 2) state <= QUIZ_3;
+
+						if (!seat) begin
+							lives <= lives - 1;
+							if (lives == 1) state <= LOSE;
+							else state <= IDLE;
+						end
 					end
 				QUIZ_1:
 					begin
@@ -302,7 +306,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				GAME3:
 					begin
 						if (Sw3 & !BtnU & !BtnD & (!BtnL & !BtnR & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S1;
-						else if (!(Sw3 & !BtnU & !BtnD & (!BtnL & !BtnR & !BtnC & !Sw2 & !Sw1 & !Sw0))) state <= IDLE;
+						else if (!(!BtnU & !BtnD & (!BtnL & !BtnR & !BtnC & !Sw2 & !Sw1 & !Sw0))) state <= IDLE;
 
 						// This game is a combination of Switches and Buttons
 						// The sequence is Sw3, BtnU, BtnD
@@ -346,7 +350,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 					begin
 						if (!move) state <= IDLE;
 
-						if (professor) lives <= lives - 1;
+						if (professor) 
+						begin 
+							lives <= lives - 1;
+							state <= IDLE;
+						end
 						if (professor & (lives == 1)) state <= LOSE;
 
 						

@@ -1,6 +1,6 @@
 module random 
 (
-    input Clk, Reset
+    input Clk, Reset,
     input reg [1:0] I
 );
 
