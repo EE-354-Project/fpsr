@@ -18,11 +18,13 @@ module first_person_second_row_top (
 		BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 		BtnC,                              // the center button (this is our reset in most of our designs)
 		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0, // 8 switches
-		Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, Ld14 // 8 LEDs
+		Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, Ld14, // 8 LEDs
 		An3, An2, An1, An0,			       // 4 anodes
 		An7, An6, An5, An4,                // another 4 anodes which are not used
 		Ca, Cb, Cc, Cd, Ce, Cf, Cg,        // 7 cathodes
-		Dp                                 // Dot Point Cathode on SSDs
+		Dp,                                 // Dot Point Cathode on SSDs
+
+        hSync, vSync, vgaR, vgaG, vgaB
 );
 
 	// Clock & Reset I/O
@@ -30,6 +32,8 @@ module first_person_second_row_top (
 	// Project Specific Inputs
 	input		BtnL, BtnU, BtnD, BtnR, BtnC;	
 	input		Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0;
+    output hSync, vSync;
+	output [3:0] vgaR, vgaG, vgaB;
 
     /* From fpsr module */
     wire q_INI,    q_IDLE,  q_GAME,  q_MOVE, q_QUIZ, 
@@ -123,6 +127,8 @@ module first_person_second_row_top (
         .Ack(BtnC_Pulse),
         .Sw0(Sw0), .Sw1(Sw1),    // raw switch inputs
         .Sw2(Sw2), .Sw3(Sw3),
+        .Sw4(Sw4), .Sw5(Sw5),
+        .Sw6(Sw6), .Sw7(Sw7),
         .BtnC(BtnC_Pulse),             // debounced buttons
         .BtnL(BtnL_Pulse),
         .BtnR(BtnR_Pulse),
@@ -157,7 +163,8 @@ module first_person_second_row_top (
 
     vga_top vg (
         .ClkPort(sys_clk), .left(left), .right(right), .up(up), .down(down), .Reset(Reset),
-        .q_Q1(q_QUIZ_1), .q_Q2(q_QUIZ_2), .q_Q3(q_QUIZ_3), .q_G1(q_GAME1), .q_G2(q_GAME2), .q_G3(q_GAME3)
+        .q_Q1(q_QUIZ_1), .q_Q2(q_QUIZ_2), .q_Q3(q_QUIZ_3), .q_G1(q_GAME1), .q_G2(q_GAME2), .q_G3(q_GAME3),
+        .hSync(hSync), .vSync(vSync), .vgaR(vgaR), .vgaG(vgaG), .vgaB(vgaB)
     );
 
     /* LOGIC FOR LEDs & SSDs */

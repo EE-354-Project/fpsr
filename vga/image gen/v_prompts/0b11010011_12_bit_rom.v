@@ -1,4 +1,4 @@
-module 0b11010011_rom (
+module _0b11010011_rom (
     input wire clk,
     input wire [3:0] row,
     input wire [5:0] col,

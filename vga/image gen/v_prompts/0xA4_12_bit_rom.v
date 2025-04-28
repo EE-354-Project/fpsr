@@ -1,4 +1,4 @@
-module 0xA4_rom (
+module _0xA4_rom (
     input wire clk,
     input wire [3:0] row,
     input wire [4:0] col,

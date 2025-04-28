@@ -54,9 +54,10 @@ module background_vga(
 	end
 
 	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	me_controller mc(.clk(move_clk), .bright(bright), .rst(BtnC), .en(1'b1), .up(up), .down(down),.left(left),.right(right),.hCount(hc), .vCount(vc), .rgb(me_rgb), .background(background));
-	seats_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(seats_rgb), .background(background));
-	podium_controller pc(.clk(move_clk), .bright(bright), .rst(BtnC), .hCount(hc), .vCount(vc), .rgb(podium_rgb), .background(background));
+	me_controller mc(.clk(move_clk), .bright(bright), .rst(Reset), .enable(1'b1), .up(up), .down(down),.left(left),.right(right),.hCount(hc), .vCount(vc), .rgb(me_rgb), .background(background));
+	seats_controller sc(.clk(move_clk), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(seats_rgb), .background(background));
+	podium_controller pc(.clk(move_clk), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(podium_rgb), .background(background));
+	board_controller bc(.clk(move_clk), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(board_rgb), .background(background));
 
 	// RGB priority logic - implemented as an always block for scalability
 	// This can be easily extended when more controllers are added

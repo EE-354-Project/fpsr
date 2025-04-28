@@ -1,4 +1,4 @@
-module 49_rom (
+module _49_rom (
     input wire clk,
     input wire [3:0] row,
     input wire [3:0] col,

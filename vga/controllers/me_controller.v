@@ -21,7 +21,7 @@ module me_controller(
 	will output some data to every pixel and not just the images you are trying to display*/
 	always@ (*) begin
     	if(~bright )	//force black if not inside the display area
-			rgb = 12'b0000_0000_0000;
+			rgb = RED;
 		else if (enable && block_fill) 
 			rgb = RED; 
 		else	

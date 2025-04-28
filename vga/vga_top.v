@@ -66,8 +66,8 @@ module vga_top(
 	q3_controller q3(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q3_rgb), .en(q_Q3), .background(q2_rgb)); // q_Q3
 	q2_controller q2(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q2_rgb), .en(q_Q2), .background(q1_rgb)); // q_Q2
 	q1_controller q1(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(q1_rgb), .en(q_Q1), .background(sc_rgb)); // q_Q1
-	switch_controller sc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(sc_rgb), .en(1'b1), .background(fc_rgb)); // enable should be q_QUIZ, q_Q1, q_Q2, q_Q3
-	fpsr_controller fc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(fc_rgb), .en(1'b1), .background(bc_rgb)); // enable should be "		"
+	switch_controller sc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(sc_rgb), .en(q_Q1 | q_Q2 | q_Q3), .background(fc_rgb)); // enable should be q_QUIZ, q_Q1, q_Q2, q_Q3
+	fpsr_controller fc(.clk(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(fc_rgb), .en(q_Q1 | q_Q2 | q_Q3), .background(bc_rgb)); // enable should be "		"
 	
 	assign vgaR = rgb[11 : 8];
 	assign vgaG = rgb[7  : 4];

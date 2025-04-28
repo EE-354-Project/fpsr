@@ -10,11 +10,11 @@ module g2_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 265;
+	localparam X0 = 355;
 	localparam Y0 = 277;
-	localparam W  = 96;
+	localparam W  = 132;
 	localparam H  = 11;
-	localparam ROW_W = 4, COL_W = 7;
+	localparam ROW_W = 4, COL_W = 8;
 
 	// combinational “on” window
 	wire sprite_on = en && (vCount >= Y0) && (vCount < Y0 + H)

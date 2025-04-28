@@ -14,7 +14,7 @@ module first_person_second_row (
     input Reset,
     input Start,
     input Ack,
-    input Sw0, Sw1, Sw2, Sw3, move
+    input Sw0, Sw1, Sw2, Sw3, Sw4, Sw5, Sw6, Sw7, move,
     input BtnC, BtnL, BtnR, BtnU, BtnD,
 	input [7:0] minutes,
 
@@ -34,13 +34,14 @@ module first_person_second_row (
 
 reg flag;
 reg [21:0] state;
-wire door, move_en, game_en;
+wire door, move_en;
 
 // Only allow movement when 1 hr has passed or when we complete all of the games
 // TODO: Change door functionality (should be an input eventually)
-assign move_en = (minutes >= 2'h3C || game_cnt >= 3);
-assign game_en = game_cnt < 3;
+assign move_en = (minutes >= 60 || game_cnt >= 3);
 assign door = 1'b0;
+
+reg game_en;
 
 assign {
     q_GAME3_S3, q_GAME3_S2, q_GAME3_S1,
@@ -101,6 +102,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 			   lives <= 3'b011;
 			   flag <= 1'bx; // Used in Quiz states
 			   state <= INI;
+			   game_en <= 1'bx;
 	       end
        else // under positive edge of the clock
          begin
@@ -112,13 +114,14 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						lives <= 3'b011;
 						quiz_cnt <= 4'b0000;
 						flag <= 1'b0;
+						game_en <= 1'b1;
 
 						if (Start) state <= IDLE;
 					end
 				IDLE:
 					begin
 						if (BtnC & !professor & game_en) state <= GAME;
-						else if (professor) begin state <= QUIZ; min_max <= minutes + 3; end 
+						else if (professor) begin state <= QUIZ; min_max <= minutes + 10; end 
 						else if ((!BtnC & !professor & move) & move_en) state <= MOVE;
 
 						if (minutes >= MAX_TIME) state <= LOSE;
@@ -126,7 +129,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				GAME:
 					begin
 						if (BtnC & !professor) state <= IDLE;
-						else if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						else if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 
 						// Go to Games
 						else if (!professor & (game_cnt == 0)) state <= GAME1;
@@ -144,24 +147,22 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						// """Correctly use the switches to represent binary to equal a specific number"""
 						if (quiz_cnt == 0) state <= QUIZ_1;
 
-						else if (quiz_cnt == 1)state <= QUIZ_2;
+						else if (quiz_cnt == 1) state <= QUIZ_2;
 
-						else if (quiz_cnt == 2) state <= QUIZ_3;
-
-						else state <= GAME1;
+						else if (quiz_cnt >= 2) state <= QUIZ_3;
 					end
 				QUIZ_1:
 					begin
 						// """Number == 1"""
-						if (Sw0 & !Sw1 & !Sw2 & !Sw3) flag <= 1'b1;
-						else if (((Sw1 | Sw2 | Sw3) & BtnC) /*|| (minutes >= min_max)*/)
+						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b11010011 ) flag <= 1'b1;
+						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b11010011) & BtnC) | (minutes >= min_max) ) // submitted without having the correct switches
 						begin
 							if (lives == 1) state <= LOSE;
 							else state <= IDLE;
 							lives <= lives - 1;
 						end 
 
-						if (flag & BtnC & !Sw0)
+						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
 						begin
 							state <= IDLE; 
 							quiz_cnt <= quiz_cnt + 1; 
@@ -172,15 +173,15 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				QUIZ_2: 
 					begin
 						// """Number == 2"""
-						if (!Sw0 & Sw1 & !Sw2 & !Sw3) flag <= 1'b1;
-						else if ((Sw0 | Sw2 | Sw3) & BtnC)
+						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'hA4 ) flag <= 1'b1;
+						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'hA4) & BtnC) | (minutes >= min_max) )
 						begin
 							if (lives == 1) state <= LOSE;
 							else state <= IDLE;
 							lives <= lives - 1;
 						end 
 
-						if (flag & BtnC & !Sw1)
+						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
 						begin
 							state <= IDLE; 
 							quiz_cnt <= quiz_cnt + 1; 
@@ -191,15 +192,15 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 				QUIZ_3:
 					begin
 						// """Number == 8"""
-						if (!Sw0 & !Sw1 & !Sw2 & Sw3 & BtnC) flag <= 1'b1;
-						else if (((Sw0 | Sw2 | Sw1) & BtnC) || (min_max >= minutes))
+						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'd49 ) flag <= 1'b1;
+						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'd49) & BtnC) | (minutes >= min_max) )
 						begin
 							if (lives == 1) state <= LOSE;
 							else state <= IDLE;
 							lives <= lives - 1;
 						end 
 
-						if (flag & BtnC & !Sw3)
+						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
 						begin
 							state <= IDLE; 
 							quiz_cnt <= quiz_cnt + 1; 
@@ -218,7 +219,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 						//    Flip the first switch to continue
 						// """
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S1:
@@ -226,7 +227,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw0 & Sw1 & !Sw2) state <= GAME1_S2;
 						else if (!Sw0 | Sw2 | BtnC) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S2:
@@ -234,7 +235,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw0 & Sw1 & Sw2) state <= GAME1_S3;
 						else if (!Sw0 | !Sw1 | BtnC) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME1_S3:
@@ -264,7 +265,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 
 						//    Press the first Btn to continue
 						// """
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S1:
@@ -272,7 +273,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (!BtnL & BtnR & !BtnD & !BtnC) state <= GAME2_S2;
 						else if (BtnL | BtnD | BtnC) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S2:
@@ -280,7 +281,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (!BtnL & !BtnR & BtnD) state <= GAME2_S3;
 						else if (BtnL | BtnD | BtnC) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME2_S3:
@@ -291,7 +292,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 							state <= IDLE;
 							game_cnt <= game_cnt + 1;
 						end
-						else if (BtnC && (minutes >= MAX_TIME))
+						else if (BtnD && (minutes >= MAX_TIME))
 						begin
 							state <= LOSE;
 						end
@@ -307,7 +308,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						// The sequence is Sw3, BtnU, BtnD
 						// (we can make it longer if needed)
 						// Press Sw3 to continue
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 
@@ -316,7 +317,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw3 & BtnR & !BtnD & (!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S2;
 						else if (!Sw3 | BtnD | !(!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME3_S2:
@@ -324,7 +325,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						if (Sw3 & !BtnR & BtnD & (!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= GAME3_S3;
 						else if (!Sw3 | BtnR | !(!BtnL & !BtnU & !BtnC & !Sw2 & !Sw1 & !Sw0)) state <= IDLE;
 
-						if (professor) begin state <= QUIZ; min_max <= minutes + 3; end
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 						if (minutes >= MAX_TIME) state <= LOSE;
 					end
 				GAME3_S3:
@@ -333,6 +334,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						begin
 							state <= IDLE;
 							game_cnt <= game_cnt + 1;
+							game_en <= 1'b0;
 						end
 						else if (!Sw3 && (minutes >= MAX_TIME))
 						begin

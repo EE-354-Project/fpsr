@@ -10,7 +10,7 @@ module g1_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 265;
+	localparam X0 = 355;
 	localparam Y0 = 277;
 	localparam W  = 78;
 	localparam H  = 11;

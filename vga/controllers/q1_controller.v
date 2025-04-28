@@ -12,7 +12,7 @@ module q1_controller(
 	);
 
 	parameter WHITE   = 12'b1111_1111_1111;
-	localparam X0 = 265;
+	localparam X0 = 415;
 	localparam Y0 = 277;
 	localparam W  = 60;
 	localparam H  = 11;
@@ -33,7 +33,7 @@ module q1_controller(
 	wire [COL_W-1:0] col_addr = hCount - X0;
 	wire [11:0]      color;
 
-	0b11010011_rom rom_i (
+	_0b11010011_rom rom_i (
 		.clk        (clk),
 		.row        (row_addr),
 		.col        (col_addr),
