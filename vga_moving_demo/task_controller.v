@@ -26,18 +26,17 @@ module task_controller(
     // Create the black rectangle in the center of the screen only when switch is enabled
     assign block_fill = switch_enable && (hCount >= RECT_START_H) && (hCount <= RECT_END_H) && 
                        (vCount >= RECT_START_V) && (vCount <= RECT_END_V);
-    // Black color for the rectangle
-    parameter BLACK = 12'b0000_0000_0000;
     
-    /*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
-    will output some data to every pixel and not just the images you are trying to display*/
+    // Gray color for the rectangle
+    parameter GRAY = 12'b1000_1000_1000;
+    
     always@ (*) begin
     	if (~bright)	//force black if not inside the display area
             rgb = 12'b0000_0000_0000;
         else if (block_fill) 
-            rgb = BLACK; 
+            rgb = GRAY; 
         else    
-            rgb = background;
+            rgb = background; // Use gray background instead of input parameter
     end
     
 endmodule
