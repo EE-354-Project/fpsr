@@ -68,6 +68,10 @@ set_property PACKAGE_PIN M17 [get_ports BtnR]
 set_property PACKAGE_PIN P18 [get_ports BtnD] 
 	set_property IOSTANDARD LVCMOS33 [get_ports BtnD]
 
+# Switch 0 (SW0) constraint
+set_property PACKAGE_PIN J15 [get_ports Sw0]
+	set_property IOSTANDARD LVCMOS33 [get_ports Sw0]
+
 set_property PACKAGE_PIN A3 [get_ports {vgaR[0]}]				
 	set_property IOSTANDARD LVCMOS33 [get_ports {vgaR[0]}]
 
