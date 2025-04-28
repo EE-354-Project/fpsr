@@ -13,7 +13,7 @@ module board_controller(
     //these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
     reg [9:0] xpos, ypos;
     
-    parameter GREEN = 12'b0000_1111_0000;
+    parameter GREEN = 12'b0000_0111_0000;
     
     /*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
     will output some data to every pixel and not just the images you are trying to display*/

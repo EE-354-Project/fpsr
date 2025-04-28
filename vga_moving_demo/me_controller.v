@@ -17,12 +17,10 @@ module me_controller(
 	wire [11:0] rom_color_data;
 	reg [9:0] xpos, ypos;
 
-	// Define the transparent color (white)
-	parameter WHITE = 12'b1111_1111_1111;
-	localparam X0 = 450; // initial x position
-	localparam Y0 = 250; // initial y position (rough values of center of screen)
+	localparam X0 = BASE_X - 2*SEAT_WIDTH - (3*SEAT_SPACING)/2 + SEAT_WIDTH/2 - W/2; // initial x position (center of bottom left seat)
+	localparam Y0 = BASE_Y - SEAT_HEIGHT/2 - H/2; // initial y position (center of bottom left seat)
 	localparam W  = 32;
-	localparam H  = 32;
+	localparam H  = 30;
 	localparam ROW_W = 5, COL_W = 5;
 
 	// combinational “on” window
@@ -52,8 +50,8 @@ module me_controller(
 	always@ (*) begin
 		if(~bright)	//force black if not inside the display area
 			rgb = 12'b0000_0000_0000;
-		else if(sprite_on_d) 
-			rgb = rom_color_data; // Use color from ROM
+		else if(sprite_on_d)
+			rgb = rom_color_data; // Use color from ROM for other pixels
 		else	
 			rgb = background;
 	end
@@ -105,8 +103,8 @@ module me_controller(
     wire [9:0] character_bottom = ypos + H - 1; // Bottom edge of character
     
     // Seat position parameters (from seats_controller.v)
-    parameter SEAT_WIDTH = 40; // Width of each seat
-    parameter SEAT_HEIGHT = 40; // Height of each seat
+    parameter SEAT_WIDTH = 45; // Width of each seat
+    parameter SEAT_HEIGHT = 45; // Height of each seat
     parameter SEAT_SPACING = 15; // Space between seats
     parameter BASE_X = 450; // Center of the screen horizontally
     parameter BASE_Y = 400; // Near bottom of the screen vertically

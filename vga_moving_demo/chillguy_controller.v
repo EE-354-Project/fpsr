@@ -11,16 +11,13 @@ module chillguy_controller(
 );
     wire [11:0] rom_color_data;
     
-    // Define the transparent color (white)
-    parameter WHITE = 12'b1111_1111_1111;
-    
     // Define position and dimensions
     // Seat 3 (top row, third from left)
-    parameter SEAT_WIDTH = 35;
-    parameter SEAT_HEIGHT = 35;
+    parameter SEAT_WIDTH = 45;
+    parameter SEAT_HEIGHT = 45;
     parameter SEAT_SPACING = 15;
     parameter BASE_X = 450;
-    parameter BASE_Y = 400;
+    parameter BASE_Y = 393;
     
     // Position in seat 3 (top row, third from left)
     parameter XPOS = BASE_X + SEAT_SPACING/2 + SEAT_WIDTH/2 - 16; // Center in seat 3
@@ -58,7 +55,7 @@ module chillguy_controller(
         if(~bright) // Force black if not in display area
             rgb = 12'b0000_0000_0000;
         else if(sprite_on_d) 
-            rgb = (rom_color_data == WHITE) ? background : rom_color_data; // Transparent if white
+            rgb = (rom_color_data == 12'b101100000000) ? background : rom_color_data; // Transparent if red
         else
             rgb = background;
     end

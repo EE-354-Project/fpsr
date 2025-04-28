@@ -11,13 +11,10 @@ module italian_controller(
 );
     wire [11:0] rom_color_data;
     
-    // Define the transparent color (white)
-    parameter WHITE = 12'b1111_1111_1111;
-    
     // Define position and dimensions
     // Seat 1 (top row, leftmost)
-    parameter SEAT_WIDTH = 35;
-    parameter SEAT_HEIGHT = 35;
+    parameter SEAT_WIDTH = 45;
+    parameter SEAT_HEIGHT = 45;
     parameter SEAT_SPACING = 15;
     parameter BASE_X = 450;
     parameter BASE_Y = 400;
@@ -53,12 +50,23 @@ module italian_controller(
         .color_data(rom_color_data)
     );
     
+    // Extract color components
+    wire [3:0] red = rom_color_data[11:8];
+    wire [3:0] green = rom_color_data[7:4];
+    wire [3:0] blue = rom_color_data[3:0];
+    
     // Output RGB value
     always @(*) begin
         if(~bright) // Force black if not in display area
             rgb = 12'b0000_0000_0000;
-        else if(sprite_on_d) 
-            rgb = (rom_color_data == WHITE) ? background : rom_color_data; // Transparent if white
+        else if(sprite_on_d) begin
+            
+            // Filter out magenta colors - check if red and blue are dominant compared to green
+            if((red > green + 4'b0011) && (blue > green + 4'b0001))
+                rgb = background; // Transparent if magenta (red and blue dominant, low green)
+            else
+                rgb = rom_color_data;
+        end
         else
             rgb = background;
     end

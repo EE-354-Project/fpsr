@@ -20,8 +20,8 @@ module lebron_controller(
     // base_x = 450, base_y = 400
     
     // Calculate the center position of seat7
-    localparam SEAT_WIDTH = 35;
-    localparam SEAT_HEIGHT = 35;
+    localparam SEAT_WIDTH = 45;
+    localparam SEAT_HEIGHT = 45;
     localparam SEAT_SPACING = 15;
     localparam BASE_X = 450;
     localparam BASE_Y = 400;

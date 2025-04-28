@@ -17,8 +17,8 @@ module seats_controller(
 	parameter BROWN = 12'b1000_0100_0000; // Brown color (RGB: 8,4,0)
 	
 	// Define seat dimensions
-	parameter SEAT_WIDTH = 35; // Width of each seat
-	parameter SEAT_HEIGHT = 35; // Height of each seat
+	parameter SEAT_WIDTH = 45; // Width of each seat
+	parameter SEAT_HEIGHT = 45; // Height of each seat
 	parameter SEAT_SPACING = 15; // Space between seats
 	
 	// Base positions for the seats (bottom center of the screen)
