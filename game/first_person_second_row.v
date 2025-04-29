@@ -32,7 +32,7 @@ module first_person_second_row (
 
 );
 
-reg flag, seat_f;
+reg flag;
 reg [21:0] state;
 
 // Only allow movement when 1 hr has passed or when we complete all of the games
@@ -96,11 +96,10 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 	       begin
 			   game_cnt <= 2'b00;
 			   quiz_cnt <= 4'b0000;
-			   lives <= 3'b001;
+			   lives <= 3'b011;
 			   flag <= 1'bx; // Used in Quiz states
 			   state <= INI;
 			   game_en <= 1'bx;
-			   seat_f <= 1'bx;
 	       end
        else // under positive edge of the clock
          begin
@@ -113,7 +112,6 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						quiz_cnt <= 4'b0000;
 						flag <= 1'b0;
 						game_en <= 1'b1;
-						seat_f <= 1'b0;
 
 						if (Start) state <= IDLE;
 					end
@@ -124,6 +122,7 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if ((!BtnC & !professor & move) & move_en) state <= MOVE;
 
 						if (minutes >= MAX_TIME) state <= LOSE;
+
 					end
 				GAME:
 					begin
@@ -136,11 +135,6 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if (!professor & (game_cnt == 2)) state <= GAME3;
 
 						if (minutes >= MAX_TIME) state <= LOSE;
-
-						if (!seat) begin
-							lives <= lives - 1;
-							state <= LOSE;
-						end
 					end 
 
 				// In the Quiz state you do not automatically lose if minutes gets above MAX_TIME
@@ -153,6 +147,8 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if (quiz_cnt == 1) state <= QUIZ_2;
 
 						else if (quiz_cnt >= 2) state <= QUIZ_3;
+
+						if (!seat) lives <= lives - 1;
 					end
 				QUIZ_1:
 					begin
