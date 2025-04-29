@@ -165,7 +165,7 @@ module first_person_second_row_top (
     vga_top vg (
         .ClkPort(sys_clk), .left(left), .right(right), .up(up), .down(down), .Reset(Reset),
         .q_Q1(q_QUIZ_1), .q_Q2(q_QUIZ_2), .q_Q3(q_QUIZ_3), .q_G1(q_GAME1), .q_G2(q_GAME2), .q_G3(q_GAME3),
-        .hSync(hSync), .vSync(vSync), .vgaR(vgaR), .vgaG(vgaG), .vgaB(vgaB), .screen(screen), .door(door), .seat(seat)
+        .hSync(hSync), .vSync(vSync), .vgaR(vgaR), .vgaG(vgaG), .vgaB(vgaB), .screen(screen), .door(door), .seat(seat), .professor(professor | q_QUIZ | q_QUIZ_1 | q_QUIZ_2 | q_QUIZ_3)
     );
 
     /* LOGIC FOR LEDs & SSDs */

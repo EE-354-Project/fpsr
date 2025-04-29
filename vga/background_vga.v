@@ -23,7 +23,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module background_vga(
 	input ClkPort,
-	input left, right, up, down,
+	input left, right, up, down, professor,
     input Reset, task_enable_switch,
 	//VGA signal
 	output hSync, vSync, bright,
@@ -32,7 +32,7 @@ module background_vga(
 	output [9:0] hc, vc
 	);
 
-	wire [11:0] me_rgb, board_rgb, seats_rgb, podium_rgb, rgb, door_rgb, task_rgb, roblox_rgb, kanye_rgb, lebron_rgb, italian_rgb, folt_rgb, chillguy_rgb;
+	wire [11:0] me_rgb, board_rgb, seats_rgb, podium_rgb, rgb, door_rgb, task_rgb, roblox_rgb, kanye_rgb, lebron_rgb, italian_rgb, folt_rgb, chillguy_rgb, gandhi_rgb;
 	
 	reg [27:0]	DIV_CLK;
 	always @ (posedge ClkPort, posedge Reset)  
@@ -68,7 +68,7 @@ module background_vga(
 	italian_controller italian_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(italian_rgb), .background(background));
 	folt_controller folt_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(folt_rgb), .background(background));
 	chillguy_controller chillguy_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(Reset), .hCount(hc), .vCount(vc), .rgb(chillguy_rgb), .background(background));
-
+	gandhi_controller gandhi_ctrl(.clk(move_clk), .ClkPort(ClkPort), .bright(bright), .rst(Reset), .looking_up(professor), .hCount(hc), .vCount(vc), .rgb(gandhi_rgb), .background(background));
 
 	// Logic for the door indicator square
 	parameter INDICATOR_SIZE = 20; // Size of the square in pixels
@@ -101,8 +101,10 @@ module background_vga(
 
 		if (podium_rgb != background)
 			rgb_reg = podium_rgb;
+
+		if (gandhi_rgb != background)
+			rgb_reg = gandhi_rgb;
 		
-		// Add the new sprite controllers with appropriate priority
 		if (italian_rgb != background)
 			rgb_reg = italian_rgb;
 			

@@ -32,7 +32,7 @@ module first_person_second_row (
 
 );
 
-reg flag;
+reg flag, seat_f;
 reg [21:0] state;
 
 // Only allow movement when 1 hr has passed or when we complete all of the games
@@ -96,10 +96,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 	       begin
 			   game_cnt <= 2'b00;
 			   quiz_cnt <= 4'b0000;
-			   lives <= 3'b011;
+			   lives <= 3'b001;
 			   flag <= 1'bx; // Used in Quiz states
 			   state <= INI;
 			   game_en <= 1'bx;
+			   seat_f <= 1'bx;
 	       end
        else // under positive edge of the clock
          begin
@@ -108,10 +109,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
                  INI:
 					begin
 						game_cnt <= 2'b00;
-						lives <= 3'b011;
+						lives <= 3'b001;
 						quiz_cnt <= 4'b0000;
 						flag <= 1'b0;
 						game_en <= 1'b1;
+						seat_f <= 1'b0;
 
 						if (Start) state <= IDLE;
 					end
@@ -134,6 +136,11 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if (!professor & (game_cnt == 2)) state <= GAME3;
 
 						if (minutes >= MAX_TIME) state <= LOSE;
+
+						if (!seat) begin
+							lives <= lives - 1;
+							state <= LOSE;
+						end
 					end 
 
 				// In the Quiz state you do not automatically lose if minutes gets above MAX_TIME
@@ -146,66 +153,62 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 						else if (quiz_cnt == 1) state <= QUIZ_2;
 
 						else if (quiz_cnt >= 2) state <= QUIZ_3;
-
-						if (!seat) begin
-							lives <= lives - 1;
-							if (lives == 1) state <= LOSE;
-							else state <= IDLE;
-						end
 					end
 				QUIZ_1:
 					begin
-						// """Number == 1"""
-						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b11010011 ) flag <= 1'b1;
-						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
-						begin
-							state <= IDLE; 
-							quiz_cnt <= quiz_cnt + 1; 
-							flag <= 1'b0;
+						// Submit correct answer: pattern was latched and switches now cleared + BtnC
+						if (flag && BtnC && {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b00000000) begin
+						state    <= IDLE;
+						quiz_cnt <= quiz_cnt + 1;
+						flag     <= 1'b0;
 						end
-						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b11010011) & BtnC) | ((minutes >= min_max) & (flag == 0)) ) // submitted without having the correct switches
-						begin
-							if (lives == 1) state <= LOSE;
-							else state <= IDLE;
-							lives <= lives - 1;
-						end 
+						// Latch that the student has set the correct pattern
+						else if ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b11010011) begin
+						flag <= 1'b1;
+						end
+						// Wrong answer: BtnC pressed before the pattern was latched
+						else if (!flag && BtnC) begin
+						if (lives == 1) state <= LOSE;
+						else             state <= IDLE;
+						lives <= lives - 1;
+						end
 					end
 
 				QUIZ_2: 
 					begin
-						// """Number == 2"""
-						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'hA4 ) flag <= 1'b1;
-						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
-						begin
-							state <= IDLE; 
-							quiz_cnt <= quiz_cnt + 1; 
-							flag <= 1'b0;
+						if (flag && BtnC && {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b00000000) begin
+							state      <= IDLE;
+							quiz_cnt   <= quiz_cnt + 1;
+							flag       <= 1'b0;
 						end
-						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'hA4) & BtnC) | ((minutes >= min_max) & (flag == 0)) )
-						begin
+						else if ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'hA4) begin
+							flag       <= 1'b1;
+						end
+						else if (!flag && (BtnC && {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} != 8'hA4 || minutes >= min_max)) begin
 							if (lives == 1) state <= LOSE;
-							else state <= IDLE;
+							else            state <= IDLE;
 							lives <= lives - 1;
-						end 
+						end
 					end
 
-				QUIZ_3:
+				QUIZ_3: 
 					begin
-						// """Number == 8"""
-						if ( {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'd49 ) flag <= 1'b1;
-						else if ( flag & BtnC & ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 0) )
-						begin
-							state <= IDLE; 
-							quiz_cnt <= quiz_cnt + 1; 
-							flag <= 1'b0;
+						if (flag && BtnC && {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'b00000000) begin
+							state      <= IDLE;
+							quiz_cnt   <= quiz_cnt + 1;
+							flag       <= 1'b0;
 						end
-						else if ( (!({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'd49) & BtnC) | ((minutes >= min_max) & (flag == 0)) )
-						begin
+						else if ({Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} == 8'd49) begin
+							flag       <= 1'b1;
+						end
+						else if (!flag && (BtnC && {Sw7,Sw6,Sw5,Sw4,Sw3,Sw2,Sw1,Sw0} != 8'd49
+										|| minutes >= min_max)) begin
 							if (lives == 1) state <= LOSE;
-							else state <= IDLE;
+							else           state <= IDLE;
 							lives <= lives - 1;
-						end 
+						end
 					end
+
 
 				GAME1:
 					begin
@@ -345,6 +348,8 @@ always @(posedge Clk, posedge Reset) //asynchronous active_high Reset
 					begin
 						if (!move) state <= IDLE;
 						else if (door) state <= WIN;
+
+						if (professor) begin state <= QUIZ; min_max <= minutes + 10; end
 					end
 				WIN:
 				begin
