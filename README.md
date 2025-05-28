@@ -2,14 +2,9 @@
 
 ## Game Description
 
-**First Person, Second Row** is a game in which you play as a student attending a lecture in a crowded classroom, led by a professor. Your objective is to complete all assigned tasks (represented as mini-games) or endure half the lecture duration in order to leave the room and win.
+**First Person, Second Row** is a game in which you play as a student attending a lecture in a crowded classroom, led by a professor. Your objective is to complete all assigned tasks (represented as mini-games) or endure half the lecture duration to leave the room and win. However, you must leave the classroom before the lecture ends with at least 1 life remaining to win.
 
 Throughout the game, the professor may randomly call on you with a question. If you fail to answer correctly within the allotted time, or if you're caught moving out of your seat when called upon, you lose one of your three lives.
-
-To win the game, you must either:
-
-- Successfully complete all **three tasks** (mini-games), or
-- Survive through **half the class time** without losing all your lives.
 
 ## FPGA Board Integration (Xilinx Artix-7)
 
