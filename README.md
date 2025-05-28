@@ -6,7 +6,7 @@
 
 Throughout the game, the professor may randomly call on you with a question. If you fail to answer correctly within the allotted time, or if you're caught moving out of your seat when called upon, you lose one of your three lives.
 
-## FPGA Board Integration (Xilinx Artix-7)
+## FPGA Board Integration (Nexys Artix-7)
 
 ### Seven-Segment Displays (SSDs)
 
